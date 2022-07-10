@@ -1,0 +1,22 @@
+{
+  "name": "mdx",
+  "version": "1.0.0",
+  "description": "Madaket Developer Tools",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "mdx",
+    "bash",
+    "dashboard"
+  ],
+  "author": "Swapnil Shrikhande",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.1",
+    "jolt.sh": "https://github.com/swapnilshrikhande/jolt.sh/tarball/master",
+    "shelljs": "^0.8.5",
+    "socket.io": "^4.5.1"
+  }
+}
