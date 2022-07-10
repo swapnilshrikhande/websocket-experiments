@@ -43,11 +43,20 @@
           socket.emit('command-kill', input.value);
         });
 
-        socket.on('command-response', function(msg) {
+        socket.on('command-response', function(response) {
             var item = document.createElement('li');
-            item.textContent = msg;
-            messages.appendChild(item);
-            window.scrollTo(0, document.body.scrollHeight);
+
+           response.result.forEach(
+             (currentValue, index, arr) => {
+              let line = document.createElement("div");
+              line.textContent = currentValue;
+              item.appendChild(line);
+             }
+           );
+
+          messages.appendChild(item);
+            
+          window.scrollTo(0, document.body.scrollHeight);
         });
 
     </script>

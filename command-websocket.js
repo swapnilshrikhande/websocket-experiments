@@ -5,6 +5,8 @@ const server = http.createServer(app);
 const { Server } = require("socket.io");
 const io = new Server(server);
 const { spawn } = require('node:child_process');
+var kill  = require('tree-kill');
+
 
 const escapeChars = new Set([' ', '\\', '   ', '\n', '"', '"']);
 
@@ -42,7 +44,7 @@ let runCommand = function(cmd,callback){
   let ls = spawn(cmd,args,{shell:true});
 
   ls.stdout.on('data', (data) => {
-      callback(''+data);
+      callback(data.toString());
   });
   
   ls.on('close', (code) => {
@@ -63,15 +65,19 @@ io.on('connection', (socket) => {
         //broadcast message to everyone
         //io.emit('chat message', msg);
         currentCommand = runCommand(cmd,(data)=>{
-          socket.emit("command-response",data);
+          //replace \n with br
+          lines = data.split("\n");
+          socket.emit("command-response", {'result' : lines} );
         })
     });
 
     socket.on('command-kill', (cmd) => {
-      if( currentCommand ){
-        //currentCommand.channel.disconnect();
-        let killResult = currentCommand.kill('SIGABRT');
-        console.log('Command Aborted: '+killResult);
+      if( currentCommand && currentCommand.pid){
+        //let killResult = currentCommand.kill('SIGABRT');
+        //console.log('Command Aborted: '+killResult);
+        kill(currentCommand.pid,(error)=>{
+           console.log('Command Aborted = '+error);
+        });
       }  
     });
     
