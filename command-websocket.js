@@ -6,9 +6,44 @@ const { Server } = require("socket.io");
 const io = new Server(server);
 const { spawn } = require('node:child_process');
 var kill  = require('tree-kill');
-
+const { stat } = require('fs');
 
 const escapeChars = new Set([' ', '\\', '   ', '\n', '"', '"']);
+
+class ProcessStatus {
+    constructor(pid,name,status){
+      this._name = name;
+      this._pid  = pid;
+      this._status = status;
+    }
+
+    set name(name) {
+      this._name = name;
+      return this;
+    }
+
+    get name() {
+      return this._name;
+    }
+
+    set pid(pid){
+      this._pid = pid;
+      return this;
+    }
+
+    get pid(){
+      return this._pid;
+    }
+
+    set status(status){
+      this._status = status;
+      return this;
+    }
+
+    get status(){
+      return this._status;
+    }
+}
 
 app.get('/', (req, res) => {
   res.sendFile(__dirname + '/index.html');
@@ -41,10 +76,14 @@ let runCommand = function(cmd,callback){
 
   let args = extractArguments(cmd);
 
-  let ls = spawn(cmd,args,{shell:true});
+  let ls = spawn(cmd,args,{shell:true,detached:true});
 
   ls.stdout.on('data', (data) => {
-      callback(data.toString());
+    callback( ls.pid, data.toString());
+  });
+
+  ls.stderr.on('data', (data) => {
+    console.error("Error : "+data.toString());
   });
   
   ls.on('close', (code) => {
@@ -58,25 +97,39 @@ let runCommand = function(cmd,callback){
 
 io.on('connection', (socket) => {
     console.log('a user connected');
-    let currentCommand;
+
+    const processStatusMap = new Map();
     
     socket.on('command', (cmd) => {
         console.log('Command: ' + cmd);
         //broadcast message to everyone
         //io.emit('chat message', msg);
-        currentCommand = runCommand(cmd,(data)=>{
+        runCommand(cmd,(pid, data)=>{
           //replace \n with br
           lines = data.split("\n");
-          socket.emit("command-response", {'result' : lines} );
+          processStatusMap.set(pid,new ProcessStatus(pid,cmd,'RUNNING'));
+          socket.emit("command-response", {'pid': pid,'result' : lines} );
         })
     });
 
-    socket.on('command-kill', (cmd) => {
-      if( currentCommand && currentCommand.pid){
+    socket.on('command-kill', (pid) => {
+      if( pid ){
         //let killResult = currentCommand.kill('SIGABRT');
         //console.log('Command Aborted: '+killResult);
-        kill(currentCommand.pid,(error)=>{
-           console.log('Command Aborted = '+error);
+        kill( pid, (error)=>{ 
+           
+          
+           console.log("pid="+pid );
+           console.log("processStatusMap="+JSON.stringify(processStatusMap) );
+
+           let processStatus =   processStatusMap.get(pid) || {"pid":pid,"name":"unknown"};
+           
+           if( error ){
+            console.log(`Error Aborting Command ${processStatus.name} with error ${error} `);
+           } else {
+            console.log(`Command ${processStatus.name} Aborted Successfully`);
+           }
+           
         });
       }  
     });
@@ -85,8 +138,6 @@ io.on('connection', (socket) => {
       console.log('user disconnected');
     });
 });
-
-
 
 server.listen(3000, () => {
   console.log('listening on *:3000');
