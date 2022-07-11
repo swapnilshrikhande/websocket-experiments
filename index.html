@@ -51,9 +51,10 @@
             if( response.result ){
               response.result.forEach(
                 (currentValue, index, arr) => {
-                let line = document.createElement("div");
-                line.textContent = currentValue;
-                item.appendChild(line);
+                  let line = document.createElement("pre");
+                  line.textContent = currentValue;
+                  line.className = "bash";  
+                  item.appendChild(line);
                 }
               );
             }

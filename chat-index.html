@@ -13,6 +13,13 @@
       #messages { list-style-type: none; margin: 0; padding: 0; }
       #messages > li { padding: 0.5rem 1rem; }
       #messages > li:nth-child(odd) { background: #efefef; }
+
+      pre.bash {
+        background-color: black;
+        color: grey;
+        font-family: Consolas,Monaco,Lucida Console,Liberation Mono,DejaVu Sans Mono,Bitstream Vera Sans Mono,Courier New, monospace;
+      }
+
     </style>
   </head>
   <body>
@@ -35,9 +42,11 @@
         });
 
         socket.on('chat message', function(msg) {
-            var item = document.createElement('li');
+            var item = document.createElement('pre');
             item.textContent = msg;
+            item.className = "bash";
             messages.appendChild(item);
+
             window.scrollTo(0, document.body.scrollHeight);
         });
 
